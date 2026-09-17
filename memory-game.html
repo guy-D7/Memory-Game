@@ -5,16 +5,39 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>Flip-Card Memory Game</title>
 <style>
-  :root {
+  :root, :root[data-theme="dark"] {
     --bg: #1b1f3b;
     --bg2: #2d325f;
     --card-back: linear-gradient(135deg, #6a5cff, #9b5cff);
     --card-front: #ffffff;
+    --card-front-text: #1b1f3b;
     --accent: #ffd166;
+    --accent-text: #1b1f3b;
     --text: #f4f4ff;
+    --stat-bg: rgba(255,255,255,0.08);
+    --stat-border: rgba(255,255,255,0.12);
+    --win-bg: linear-gradient(135deg, #2d325f, #1b1f3b);
+    --overlay-bg: rgba(10, 12, 30, 0.85);
+  }
+
+  :root[data-theme="light"] {
+    --bg: #eef1fb;
+    --bg2: #ffffff;
+    --card-back: linear-gradient(135deg, #7c6cff, #b18cff);
+    --card-front: #ffffff;
+    --card-front-text: #1b1f3b;
+    --accent: #f4a723;
+    --accent-text: #ffffff;
+    --text: #1b1f3b;
+    --stat-bg: rgba(27,31,59,0.05);
+    --stat-border: rgba(27,31,59,0.12);
+    --win-bg: linear-gradient(135deg, #ffffff, #eef1fb);
+    --overlay-bg: rgba(60, 66, 110, 0.55);
   }
 
   * { box-sizing: border-box; }
+
+  body { transition: background 0.3s ease, color 0.3s ease; }
 
   body {
     margin: 0;
@@ -44,8 +67,8 @@
     margin-bottom: 18px;
   }
   .stat {
-    background: rgba(255,255,255,0.08);
-    border: 1px solid rgba(255,255,255,0.12);
+    background: var(--stat-bg);
+    border: 1px solid var(--stat-border);
     border-radius: 12px;
     padding: 10px 18px;
     min-width: 90px;
@@ -56,7 +79,7 @@
 
   button.restart {
     background: var(--accent);
-    color: #1b1f3b;
+    color: var(--accent-text);
     border: none;
     border-radius: 12px;
     padding: 12px 22px;
@@ -116,6 +139,7 @@
 
   .card-front {
     background: var(--card-front);
+    color: var(--card-front-text);
     transform: rotateY(180deg);
     font-size: clamp(2rem, 8vw, 3rem);
   }
@@ -133,7 +157,7 @@
   .overlay {
     position: fixed;
     inset: 0;
-    background: rgba(10, 12, 30, 0.85);
+    background: var(--overlay-bg);
     display: none;
     align-items: center;
     justify-content: center;
@@ -144,8 +168,8 @@
   @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
 
   .win-box {
-    background: linear-gradient(135deg, #2d325f, #1b1f3b);
-    border: 1px solid rgba(255,255,255,0.15);
+    background: var(--win-bg);
+    border: 1px solid var(--stat-border);
     border-radius: 20px;
     padding: 36px 40px;
     text-align: center;
@@ -154,9 +178,33 @@
   .win-box h2 { margin: 0 0 6px; font-size: 2rem; color: var(--accent); }
   .win-box p { margin: 6px 0; opacity: 0.85; }
   .win-box .highlight { color: var(--accent); font-weight: 700; }
+
+  /* Theme toggle */
+  .theme-toggle {
+    position: fixed;
+    top: 16px;
+    right: 16px;
+    background: var(--stat-bg);
+    border: 1px solid var(--stat-border);
+    color: var(--text);
+    border-radius: 30px;
+    padding: 8px 14px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: transform 0.15s ease, background 0.3s ease;
+  }
+  .theme-toggle:hover { transform: translateY(-2px); }
 </style>
 </head>
 <body>
+  <button class="theme-toggle" id="themeToggle" aria-label="Toggle light and dark mode">
+    <span id="themeIcon">🌙</span><span id="themeLabel">Dark</span>
+  </button>
+
   <h1>🧠 Flip-Card Memory Game</h1>
   <p class="subtitle">Match all 6 pairs as fast as you can!</p>
 
@@ -290,6 +338,31 @@
 
   document.getElementById("restart").addEventListener("click", restart);
   document.getElementById("playAgain").addEventListener("click", restart);
+
+  // --- Theme toggle (light / dark) ---
+  const themeIcon = document.getElementById("themeIcon");
+  const themeLabel = document.getElementById("themeLabel");
+
+  function applyTheme(theme) {
+    document.documentElement.setAttribute("data-theme", theme);
+    const dark = theme === "dark";
+    themeIcon.textContent = dark ? "🌙" : "☀️";
+    themeLabel.textContent = dark ? "Dark" : "Light";
+    try { localStorage.setItem("memoryGameTheme", theme); } catch (e) {}
+  }
+
+  // Load saved preference, else follow the OS setting
+  let savedTheme = null;
+  try { savedTheme = localStorage.getItem("memoryGameTheme"); } catch (e) {}
+  if (!savedTheme) {
+    savedTheme = window.matchMedia && window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark";
+  }
+  applyTheme(savedTheme);
+
+  document.getElementById("themeToggle").addEventListener("click", () => {
+    const current = document.documentElement.getAttribute("data-theme");
+    applyTheme(current === "dark" ? "light" : "dark");
+  });
 
   // init
   buildBoard();
